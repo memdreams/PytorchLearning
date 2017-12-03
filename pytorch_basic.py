@@ -2,18 +2,93 @@ import torch
 import torch.nn as nn
 import numpy as np
 from torch.autograd import Variable
+import torchvision.datasets as dsets
+import torchvision.transforms as transforms
+import torch.utils.data as data
+
+
 def PCA(x):
     xm = torch.mean(x, 1, keepdim=True)
     xc = torch.matmul(xm, torch.transpose(xm, 0, -1))
     es, vs = torch.symeig(xc, eigenvectors=True)
     return es, vs
 
-x = Variable(torch.randn(5,3))
+x = Variable(torch.randn(5,3), requires_grad=True)
 y = Variable(torch.randn(5,2))
+z = 2*x
+#Why z.backward() is wrong?!
 
 linear = nn.Linear(3, 2)
 print('w:', linear.weight)  # random initial data from -1 to 1
 print('b:', linear.bias)
+
+# build loss and optimizer
+loss_function = nn.MSELoss()
+optimizer = torch.optim.SGD(linear.parameters(), lr=0.01)
+
+# forward propagation
+pred = linear(x)
+lr = 0.01
+
+loss = loss_function(pred, y)
+print('loss:', loss.data[0])
+
+# backpropagation
+loss.backward()
+
+out = z.sum()
+out.backward()
+
+print('dL/dw: ', linear.weight.grad)
+print('dL/db: ', linear.bias.grad)
+
+# 1-step optimization(gradient descent)
+optimizer.step()
+
+# or do it by yourself
+# linear.weight.data.sub_(lr * linear.weight.grad.data)
+# linear.bias.data.sub_(lr * linear.bias.grad.data)
+
+pred = linear(x)
+loss = loss_function(pred, y)
+print("The loss after once optimizing: ", loss.data[0])
+
+
+# Implementing the input pipeline
+train_dataset = dsets.CIFAR10(root='./data/', train=True, transform=transforms.ToTensor(),
+                              download=False)
+
+image, label = train_dataset[0]
+print(image.size())
+print(label)
+
+# Data loader
+train_loader = data.DataLoader(train_dataset,
+                               batch_size=100,
+                               shuffle=True,
+                               num_workers=2)
+
+
+dtype = torch.FloatTensor
+# dtype = torch.cuda.FloatTensor # Uncomment this to run on GPU
+
+# N is batch size; D_in is input dimension;
+# H is hidden dimension; D_out is output dimension.
+N, D_in, H, D_out = 4, 2, 10, 3
+
+# Create random input and output data
+x = torch.randn(N, D_in).type(dtype)
+y = torch.randn(N, D_out).type(dtype)
+
+# Randomly initialize weights
+w1 = torch.randn(D_in, H).type(dtype)
+w2 = torch.randn(H, D_out).type(dtype)
+
+b1 = torch.zeros((N, H))
+
+h = x.mm(w1) + b1
+print(h)
+
 
 
 
