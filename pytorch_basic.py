@@ -15,7 +15,11 @@ def PCA(x):
 
 x = Variable(torch.randn(5,3), requires_grad=True)
 y = Variable(torch.randn(5,2))
-z = 2*x
+
+xx = Variable(torch.ones((2,3)), requires_grad=True)
+xx.data[0][0] = 3
+yy = torch.mean(xx)
+z = 2*xx
 #Why z.backward() is wrong?!
 
 linear = nn.Linear(3, 2)
@@ -37,7 +41,8 @@ print('loss:', loss.data[0])
 loss.backward()
 
 out = z.sum()
-out.backward()
+out.backward() # out.backward()和操作out.backward(torch.Tensor([1.0]))是等价的
+x.grad #grad在反向传播过程中是累加的(accumulated)，这意味着每一次运行反向传播，梯度都会累加之前的梯度，所以反向传播之前需把梯度清零
 
 print('dL/dw: ', linear.weight.grad)
 print('dL/db: ', linear.bias.grad)
