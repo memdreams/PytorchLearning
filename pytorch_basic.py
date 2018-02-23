@@ -60,9 +60,14 @@ print("The loss after once optimizing: ", loss.data[0])
 
 
 # Implementing the input pipeline
-train_dataset = dsets.CIFAR10(root='./data/', train=True, transform=transforms.ToTensor(),
+train_dataset = dsets.CIFAR10(root='./data/',
+                              train=True,
+                              transform=transforms.ToTensor(),
                               download=False)
-
+test_dataset = dsets.CIFAR10(root='./data/',
+                              train=False,
+                              transform=transforms.ToTensor(),
+                              download=False)
 image, label = train_dataset[0]
 print(image.size())
 print(label)
@@ -73,6 +78,15 @@ train_loader = data.DataLoader(train_dataset,
                                shuffle=True,
                                num_workers=2)
 
+test_loader = data.DataLoader(test_dataset,
+                              batch_size=4,
+                              shuffle=True,
+                              num_workers=2)
+
+classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+from torchvision.transforms import ToPILImage
+show = ToPILImage() # 可以把Tensor转成Image，方便可视化
+show((image+1)/2).resize((100,100))
 
 dtype = torch.FloatTensor
 # dtype = torch.cuda.FloatTensor # Uncomment this to run on GPU
