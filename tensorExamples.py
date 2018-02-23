@@ -41,3 +41,57 @@ y = x.tolist() # [1.0, 3.25, 5.5, 7.75, 10.0]
 x = torch.randperm(5)
 print(y)
 
+
+# A Real Example
+# %matplotlib inline # only used for jupyter notebook
+from matplotlib import pyplot as plt
+torch.manual_seed(1000)
+
+def get_fake_data(batch_size=8):
+    x = torch.rand(batch_size, 1) * 20 #rand: 0,1分布
+    y = x * 2 + (1 + torch.randn(batch_size, 1)) * 3 # randn: N(0, 1)
+    return x, y
+
+# x, y = get_fake_data()
+# plt.scatter(x.squeeze().numpy(), y.squeeze().numpy())
+# plt.show()
+
+w = torch.rand(1, 1)
+b = torch.zeros(1,1)
+
+lr = 0.001
+
+for i in range(2000):
+    x, y = get_fake_data()
+
+    # forward: loss
+    y_pred = x@w + b.expand_as(y) # x.mm(w) = x@w
+    loss = 0.5 * (y_pred - y) ** 2
+    loss = loss.sum()
+
+    # backward: gradient
+    dloss = 1
+    dy_pred = dloss * (y_pred - y)
+    dw = x.t().mm(dy_pred)
+    db = dy_pred.sum()
+
+    w.sub_(lr*dw)
+    b.sub_(lr * db)
+
+    if i % 1000 == 0:
+        x = torch.arange(0, 20).view(-1, 1)
+        y = x.mm(w) + b.expand_as(x)
+        plt.plot(x.numpy(), y.numpy())
+
+        x1, y1 = get_fake_data(batch_size=20)
+        plt.scatter(x1.squeeze().numpy(), y1.squeeze().numpy())
+
+        plt.xlim(0, 20)
+        plt.ylim(0, 41)
+        plt.show()
+        plt.pause(0.5)
+
+print(w.squeeze()[0], b.squeeze()[0])
+
+
+
